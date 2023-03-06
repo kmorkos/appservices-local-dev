@@ -62,6 +62,10 @@ const isAppServicesContextServices = (node: Node, state: PluginPass): boolean =>
   return isAppServicesContextMember(node, state, 'services');
 };
 
+const isAppServicesContextValues = (node: Node, state: PluginPass): boolean => {
+  return isAppServicesContextMember(node, state, 'values');
+};
+
 export default function ({ types: t }: typeof BabelCoreNamespace): PluginObj {
   return {
     visitor: {
@@ -104,6 +108,26 @@ export default function ({ types: t }: typeof BabelCoreNamespace): PluginObj {
               [t.stringLiteral(connString)],
             )),
           );
+        } else if (isAppServicesContextValues(callee.object, state)) {
+          const args = path.node.arguments;
+          if (args.length !== 1) {
+            throw path.buildCodeFrameError(`Expected exactly one argument, but found ${args.length}`);
+          }
+
+          if (!t.isStringLiteral(args[0])) {
+            throw path.buildCodeFrameError(`Expected StringLiteral argument, but found ${args[0].type}`);
+          }
+
+          const valueName = args[0].value;
+
+          const valueMappings = state.opts['values'];
+          const val = valueMappings ? valueMappings[valueName] : '';
+
+          if (!val) {
+            throw path.buildCodeFrameError(`Could not find mapping for ${valueName} value`);
+          }
+
+          path.replaceWith(t.stringLiteral(val));
         }
       },
     },
