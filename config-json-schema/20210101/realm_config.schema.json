@@ -1,0 +1,55 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/10gen/baas/importexport/app-data20210101",
+    "$ref": "#/$defs/appData20210101",
+    "$defs": {
+        "AllowedIPs": {
+            "items": true,
+            "type": "array"
+        },
+        "appData20210101": {
+            "properties": {
+                "app_id": {
+                    "type": "string",
+                    "description": "Test app_id description"
+                },
+                "config_version": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "provider_region": {
+                    "type": "string"
+                },
+                "deployment_model": {
+                    "type": "string",
+                    "enum": [
+                        "GLOBAL",
+                        "LOCAL"
+                    ]
+                },
+                "environment": {
+                    "type": "string"
+                },
+                "allowed_request_origins": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "access_list": {
+                    "$ref": "#/$defs/AllowedIPs"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "config_version"
+            ]
+        }
+    }
+}
