@@ -2,13 +2,14 @@ import * as BabelCoreNamespace from '@babel/core';
 import { Node, PluginObj } from '@babel/core';
 import { addNamed } from "@babel/helper-module-imports";
 import { Scope } from '@babel/traverse';
+import { BlockStatement } from '@babel/types';
 
 const resolveIdentifier = (node: Node, scope: Scope): Node => {
   if (node.type !== 'Identifier') {
     return node;
   }
 
-  const binding = scope.bindings[node.name];
+  const binding = scope.getBinding(node.name);
   if (!binding) {
     return node;
   }
@@ -54,11 +55,72 @@ const isAppServicesContextValues = (node: Node, scope: Scope): boolean => {
   return isAppServicesContextMember(node, scope, 'values');
 };
 
+interface MongoClientInstance {
+  id: BabelCoreNamespace.types.Identifier;
+  connString: string;
+}
+
+enum StateKey {
+  MONGO_CLIENT_KEY_PREFIX = 'MONGO_CLIENT_',
+  MONGO_CLIENT_INSTANCE_LIST = 'MONGO_CLIENT_INSTANCE_LIST',
+  MONGO_CLIENT_LIST_VAR = 'MONGO_CLIENT_LIST_VAR',
+  MONGO_CLIENT_CLEANUP_FINALLY_STATEMENT = 'MONGO_CLIENT_CLEANUP_FINALLY_STATEMENT'
+}
+
 export default function ({ types: t }: typeof BabelCoreNamespace): PluginObj {
   return {
     name: 'appservices-context-transformer',
+
     visitor: {
+      Program: {
+        // create list of mongo clients to track for cleanup
+        enter(path, state) {
+          state.set(StateKey.MONGO_CLIENT_INSTANCE_LIST, []);
+          state.set(StateKey.MONGO_CLIENT_LIST_VAR, path.scope.generateUidIdentifier('mongoClients'));
+        },
+
+        // initialize required mongo clients, as well as cleanup list
+        exit(path, state) {
+          const mongoClientInstances = state.get(StateKey.MONGO_CLIENT_INSTANCE_LIST) as MongoClientInstance[];
+          if (mongoClientInstances.length === 0) {
+            // clear the cleanup statement if there are no clients
+            const finallyStatement = state.get(StateKey.MONGO_CLIENT_CLEANUP_FINALLY_STATEMENT) as BlockStatement;
+            if (finallyStatement) {
+              finallyStatement.body = [];
+            }
+
+            return;
+          }
+
+          // add mongodb import
+          const mongoClientType = addNamed(path, 'MongoClient', 'mongodb');
+
+          // add list of clients to cleanup
+          const mongoClientList = t.arrayExpression();
+          const mongoClientListVar = state.get(StateKey.MONGO_CLIENT_LIST_VAR) as BabelCoreNamespace.types.Identifier;
+
+          path.unshiftContainer('body', t.variableDeclaration('const', [
+            t.variableDeclarator(
+              mongoClientListVar,
+              mongoClientList,
+            )
+          ]));
+
+          mongoClientInstances.forEach(({ id, connString }) => {
+            // declare in global scope
+            path.unshiftContainer('body', t.variableDeclaration('const', [
+              t.variableDeclarator(id, t.newExpression(mongoClientType, [t.stringLiteral(connString)],),
+              )
+            ]));
+
+            // add to cleanup list
+            mongoClientList.elements.push(id);
+          });
+        }
+      },
+
       // exports = ... -> export default ...
+      // wrap function body in try/finally to call cleanup
       ExpressionStatement(path, state) {
         if (!t.isProgram(path.parent)) {
           // not in outermost scope
@@ -84,7 +146,35 @@ export default function ({ types: t }: typeof BabelCoreNamespace): PluginObj {
           return;
         }
 
-        path.replaceWith(t.exportDefaultDeclaration(rhs));
+        const mongoClientListVar = state.get(StateKey.MONGO_CLIENT_LIST_VAR) as BabelCoreNamespace.types.Identifier;
+        const finallyStatement = t.blockStatement([
+          t.expressionStatement(
+            t.callExpression(
+              t.memberExpression(mongoClientListVar, t.identifier('forEach')), [
+              t.arrowFunctionExpression(
+                [t.identifier('mc')],
+                t.callExpression(t.memberExpression(t.identifier('mc'), t.identifier('close')), []),
+              )
+            ]),
+          )
+        ]);
+        state.set(StateKey.MONGO_CLIENT_CLEANUP_FINALLY_STATEMENT, finallyStatement);
+
+        const wrappedFnBody = t.blockStatement([
+          t.tryStatement(
+            rhs.body,         // try
+            null,             // catch
+            finallyStatement, // finally
+          )
+        ]);
+
+        path.replaceWith(t.exportDefaultDeclaration(t.functionExpression(
+          rhs.id,
+          rhs.params,
+          wrappedFnBody,
+          rhs.generator,
+          rhs.async,
+        )));
       },
 
       // context.<...> -> vanilla JS
@@ -123,16 +213,17 @@ export default function ({ types: t }: typeof BabelCoreNamespace): PluginObj {
             throw path.buildCodeFrameError(`Could not find mapping for ${resolvedArg.value} data source`);
           }
 
-          // generate an import if one wasn't already added
-          const mongoClientType = state.get('mongoClientType') ?? addNamed(path, 'MongoClient', 'mongodb');
-          state.set('mongoClientType', mongoClientType);
+          // generate a client for this data source if one wasn't already added
+          const mongoClientKey = `${StateKey.MONGO_CLIENT_KEY_PREFIX}${connString}`;
+          const id = state.get(mongoClientKey) ?? state.file.scope.generateUidIdentifier('mongoClient');
 
-          path.replaceWith(
-            t.expressionStatement(t.newExpression(
-              mongoClientType,
-              [t.stringLiteral(connString)],
-            )),
-          );
+          state.set(mongoClientKey, id);
+          state.set(StateKey.MONGO_CLIENT_INSTANCE_LIST, [
+            ...state.get(StateKey.MONGO_CLIENT_INSTANCE_LIST),
+            { id, connString },
+          ]);
+
+          path.replaceWith(id);
 
         } else if (isAppServicesContextValues(callee.object, path.scope)) {
           const valueMappings = state.opts['values'];
