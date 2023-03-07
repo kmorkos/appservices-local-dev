@@ -19,6 +19,6 @@
   },
   "scripts": {
     "test": "jest src/test/*",
-    "transpile": "npx babel src/index.ts --presets=@babel/preset-env,@babel/preset-typescript -o dist/index.js"
+    "transpile": "babel src/index.ts --presets=@babel/preset-env,@babel/preset-typescript -o dist/index.js"
   }
 }
