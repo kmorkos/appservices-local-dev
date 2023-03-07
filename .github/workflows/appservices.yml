@@ -30,7 +30,9 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'yarn'
-        cache-dependency-path: ./demo_tests/yarn.lock
+        cache-dependency-path: |
+          ./babel-context-transform/yarn.lock
+          ./demo_tests/yarn.lock
     - name: Build babel plugin
       run: yarn && yarn transpile
       working-directory: ./babel-context-transform
