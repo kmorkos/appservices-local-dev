@@ -58,6 +58,36 @@ export default function ({ types: t }: typeof BabelCoreNamespace): PluginObj {
   return {
     name: 'appservices-context-transformer',
     visitor: {
+      // exports = ... -> export default ...
+      ExpressionStatement(path, state) {
+        if (!t.isProgram(path.parent)) {
+          // not in outermost scope
+          return;
+        }
+
+        if (!t.isAssignmentExpression(path.node.expression)) {
+          return;
+        }
+
+        const lhs = path.node.expression.left;
+        const rhs = path.node.expression.right;
+
+        if (!t.isIdentifier(lhs)) {
+          return;
+        }
+
+        if (lhs.name !== 'exports') {
+          return;
+        }
+
+        if (!t.isFunctionExpression(rhs)) {
+          return;
+        }
+
+        path.replaceWith(t.exportDefaultDeclaration(rhs));
+      },
+
+      // context.<...> -> vanilla JS
       CallExpression(path, state) {
         const callee = path.node.callee;
         if (!t.isMemberExpression(callee)) {
