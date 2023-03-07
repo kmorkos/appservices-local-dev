@@ -1,73 +1,61 @@
 import * as BabelCoreNamespace from '@babel/core';
 import { Node, PluginObj, PluginPass } from '@babel/core';
+import { Scope } from '@babel/traverse';
 
-const isAppServicesContext = (node: Node, state: PluginPass): boolean => {
+const resolveIdentifier = (node: Node, scope: Scope): Node => {
   if (node.type !== 'Identifier') {
-    return false;
+    return node;
   }
 
-  const binding = state.file.scope.bindings[node.name];
+  const binding = scope.bindings[node.name];
   if (!binding) {
-    return node.name === 'context';
+    return node;
   }
 
-  // check if this is pointing to variable declared elsewhere
-  if (binding.path.node.type !== 'VariableDeclarator') {
-    return false;
+  if (binding.path.node.type === 'VariableDeclarator') {
+    return resolveIdentifier(binding.path.node.init!, scope);
   }
 
-  if (!binding.path.node.init) {
-    return false;
-  }
-
-  return isAppServicesContext(binding.path.node.init, state);
+  return node;
 };
 
-const isAppServicesContextMember = (node: Node, state: PluginPass, memberName: string): boolean => {
-  // it can be accessed on an app services context in this path
-  if (node.type === 'MemberExpression') {
-    if (node.property.type !== 'Identifier') {
-      return false;
-    }
-
-    if (node.property.name !== memberName) {
-      return false;
-    }
-
-    return isAppServicesContext(node.object, state);
-  }
-
-  // or it can be a stored variable
-  if (node.type !== 'Identifier') {
+const isAppServicesContext = (node: Node, scope: Scope): boolean => {
+  const resolvedNode = resolveIdentifier(node, scope);
+  if (resolvedNode.type !== 'Identifier') {
     return false;
   }
 
-  const binding = state.file.scope.bindings[node.name];
-  if (!binding) {
-    return false;
-  }
-
-  if (binding.path.node.type !== 'VariableDeclarator') {
-    return false;
-  }
-
-  if (!binding.path.node.init) {
-    return false;
-  }
-
-  return isAppServicesContextMember(binding.path.node.init, state, memberName);
+  return resolvedNode.name === 'context';
 };
 
-const isAppServicesContextServices = (node: Node, state: PluginPass): boolean => {
-  return isAppServicesContextMember(node, state, 'services');
+const isAppServicesContextMember = (node: Node, scope: Scope, memberName: string): boolean => {
+  const resolvedNode = resolveIdentifier(node, scope);
+  if (resolvedNode.type !== 'MemberExpression') {
+    return false;
+  }
+
+  if (resolvedNode.property.type !== 'Identifier') {
+    return false;
+  }
+
+  if (resolvedNode.property.name !== memberName) {
+    return false;
+  }
+
+  return isAppServicesContext(resolvedNode.object, scope);
 };
 
-const isAppServicesContextValues = (node: Node, state: PluginPass): boolean => {
-  return isAppServicesContextMember(node, state, 'values');
+const isAppServicesContextServices = (node: Node, scope: Scope): boolean => {
+  return isAppServicesContextMember(node, scope, 'services');
+};
+
+const isAppServicesContextValues = (node: Node, scope: Scope): boolean => {
+  return isAppServicesContextMember(node, scope, 'values');
 };
 
 export default function ({ types: t }: typeof BabelCoreNamespace): PluginObj {
   return {
+    name: 'appservices-context-transformer',
     visitor: {
       CallExpression(path, state) {
         const callee = path.node.callee;
@@ -83,23 +71,25 @@ export default function ({ types: t }: typeof BabelCoreNamespace): PluginObj {
           return;
         }
 
-        if (isAppServicesContextServices(callee.object, state)) {
+        if (isAppServicesContextServices(callee.object, path.scope)) {
+          const dataSourceMappings = state.opts['datasources'];
+          if (!dataSourceMappings) {
+            throw path.buildCodeFrameError(`Found data source usage, but data source mappings were not provided`);
+          }
+
           const args = path.node.arguments;
           if (args.length !== 1) {
             throw path.buildCodeFrameError(`Expected exactly one argument, but found ${args.length}`);
           }
 
-          if (!t.isStringLiteral(args[0])) {
-            throw path.buildCodeFrameError(`Expected StringLiteral argument, but found ${args[0].type}`);
+          const resolvedArg = resolveIdentifier(args[0], path.scope);
+          if (!t.isStringLiteral(resolvedArg)) {
+            throw path.buildCodeFrameError(`Expected string argument, but found ${resolvedArg.type}`);
           }
 
-          const serviceName = args[0].value;
-
-          const dataSourceMappings = state.opts['datasources'];
-          const connString = dataSourceMappings ? dataSourceMappings[serviceName] : '';
-
+          const connString = dataSourceMappings[resolvedArg.value];
           if (!connString) {
-            throw path.buildCodeFrameError(`Could not find mapping for ${serviceName} data source`);
+            throw path.buildCodeFrameError(`Could not find mapping for ${resolvedArg.value} data source`);
           }
 
           path.replaceWith(
@@ -108,23 +98,25 @@ export default function ({ types: t }: typeof BabelCoreNamespace): PluginObj {
               [t.stringLiteral(connString)],
             )),
           );
-        } else if (isAppServicesContextValues(callee.object, state)) {
+        } else if (isAppServicesContextValues(callee.object, path.scope)) {
+          const valueMappings = state.opts['values'];
+          if (!valueMappings) {
+            throw path.buildCodeFrameError(`Found data source usage, but data source mappings were not provided`);
+          }
+
           const args = path.node.arguments;
           if (args.length !== 1) {
             throw path.buildCodeFrameError(`Expected exactly one argument, but found ${args.length}`);
           }
 
-          if (!t.isStringLiteral(args[0])) {
-            throw path.buildCodeFrameError(`Expected StringLiteral argument, but found ${args[0].type}`);
+          const resolvedArg = resolveIdentifier(args[0], path.scope);
+          if (!t.isStringLiteral(resolvedArg)) {
+            throw path.buildCodeFrameError(`Expected string argument, but found ${resolvedArg.type}`);
           }
 
-          const valueName = args[0].value;
-
-          const valueMappings = state.opts['values'];
-          const val = valueMappings ? valueMappings[valueName] : '';
-
+          const val = valueMappings[resolvedArg.value];
           if (!val) {
-            throw path.buildCodeFrameError(`Could not find mapping for ${valueName} value`);
+            throw path.buildCodeFrameError(`Could not find mapping for ${resolvedArg.value} value`);
           }
 
           path.replaceWith(t.stringLiteral(val));

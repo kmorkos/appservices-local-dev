@@ -40,6 +40,14 @@ const val2 = context.values.get("bizz");`,
 const val1 = "bar";
 const val2 = "buzz";`,
     },
+    'value name from variable': {
+      code: `
+const valueName = "foo";
+const val = context.values.get(valueName);`,
+      output: `
+const valueName = "foo";
+const val = "bar";`,
+    },
     'non values object': {
       code: `const unrelated = myObj.get("foo");`,
     },
@@ -57,14 +65,14 @@ const unrelated = context.values.get("foo");`,
     },
     'invalid arg type': {
       code: `const val = context.values.get(100);`,
-      throws: 'Expected StringLiteral argument, but found NumericLiteral',
+      throws: 'Expected string argument, but found NumericLiteral',
     },
     'too many args': {
       code: `const val = context.values.get("foo", "bizz");`,
       throws: 'Expected exactly one argument, but found 2',
     },
     'no args': {
-      code: `const val = context.services.get();`,
+      code: `const val = context.values.get();`,
       throws: 'Expected exactly one argument, but found 0',
     },
   },

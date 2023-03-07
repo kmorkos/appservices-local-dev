@@ -7,6 +7,7 @@
     "@babel/core": "^7.21.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.21.0",
     "@babel/preset-env": "^7.20.2",
     "@babel/preset-typescript": "^7.21.0",
     "babel-jest": "^29.5.0",

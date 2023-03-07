@@ -52,6 +52,14 @@ const ds2 = context.services.get("mongodb-atlas-2");`,
 const ds1 = new MongoClient("mongodb://localhost:27017");
 const ds2 = new MongoClient("mongodb://localhost:26000");`,
     },
+    'service name from variable': {
+      code: `
+const serviceName = "mongodb-atlas";
+const mongoClient = context.services.get(serviceName);`,
+      output: `
+const serviceName = "mongodb-atlas";
+const mongoClient = new MongoClient("mongodb://localhost:27017");`,
+    },
     'non services object': {
       code: `const unrelated = myObj.get("mongodb-atlas");`,
     },
@@ -73,7 +81,7 @@ const db = mongoClient.db("test");`,
       code: `
 const mongoClient = context.services.get(100);
 const db = mongoClient.db("test");`,
-      throws: 'Expected StringLiteral argument, but found NumericLiteral',
+      throws: 'Expected string argument, but found NumericLiteral',
     },
     'too many args': {
       code: `
