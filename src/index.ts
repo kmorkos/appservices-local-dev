@@ -1,5 +1,6 @@
 import * as BabelCoreNamespace from '@babel/core';
-import { Node, PluginObj, PluginPass } from '@babel/core';
+import { Node, PluginObj } from '@babel/core';
+import { addNamed } from "@babel/helper-module-imports";
 import { Scope } from '@babel/traverse';
 
 const resolveIdentifier = (node: Node, scope: Scope): Node => {
@@ -92,16 +93,21 @@ export default function ({ types: t }: typeof BabelCoreNamespace): PluginObj {
             throw path.buildCodeFrameError(`Could not find mapping for ${resolvedArg.value} data source`);
           }
 
+          // generate an import if one wasn't already added
+          const mongoClientType = state.get('mongoClientType') ?? addNamed(path, 'MongoClient', 'mongodb');
+          state.set('mongoClientType', mongoClientType);
+
           path.replaceWith(
             t.expressionStatement(t.newExpression(
-              t.identifier('MongoClient'),
+              mongoClientType,
               [t.stringLiteral(connString)],
             )),
           );
+
         } else if (isAppServicesContextValues(callee.object, path.scope)) {
           const valueMappings = state.opts['values'];
           if (!valueMappings) {
-            throw path.buildCodeFrameError(`Found data source usage, but data source mappings were not provided`);
+            throw path.buildCodeFrameError(`Found values usage, but value mappings were not provided`);
           }
 
           const args = path.node.arguments;

@@ -12,14 +12,17 @@ pluginTester({
   tests: {
     'one liner': {
       code: `const db = context.services.get("mongodb-atlas").db("test");`,
-      output: `const db = new MongoClient("mongodb://localhost:27017").db("test");`,
+      output: `
+import { MongoClient as _MongoClient } from "mongodb";
+const db = new _MongoClient("mongodb://localhost:27017").db("test");`,
     },
     'two lines': {
       code: `
 const mongoClient = context.services.get("mongodb-atlas");
 const db = mongoClient.db("test");`,
       output: `
-const mongoClient = new MongoClient("mongodb://localhost:27017");
+import { MongoClient as _MongoClient } from "mongodb";
+const mongoClient = new _MongoClient("mongodb://localhost:27017");
 const db = mongoClient.db("test");`,
     },
     'three lines': {
@@ -28,8 +31,9 @@ const services = context.services;
 const mongoClient = services.get("mongodb-atlas");
 const db = mongoClient.db("test");`,
       output: `
+import { MongoClient as _MongoClient } from "mongodb";
 const services = context.services;
-const mongoClient = new MongoClient("mongodb://localhost:27017");
+const mongoClient = new _MongoClient("mongodb://localhost:27017");
 const db = mongoClient.db("test");`,
     },
     'four lines': {
@@ -39,9 +43,10 @@ const services = ctx.services;
 const mongoClient = services.get("mongodb-atlas");
 const db = mongoClient.db("test");`,
       output: `
+import { MongoClient as _MongoClient } from "mongodb";
 const ctx = context;
 const services = ctx.services;
-const mongoClient = new MongoClient("mongodb://localhost:27017");
+const mongoClient = new _MongoClient("mongodb://localhost:27017");
 const db = mongoClient.db("test");`,
     },
     'multiple datasources': {
@@ -49,16 +54,18 @@ const db = mongoClient.db("test");`,
 const ds1 = context.services.get("mongodb-atlas");
 const ds2 = context.services.get("mongodb-atlas-2");`,
       output: `
-const ds1 = new MongoClient("mongodb://localhost:27017");
-const ds2 = new MongoClient("mongodb://localhost:26000");`,
+import { MongoClient as _MongoClient } from "mongodb";
+const ds1 = new _MongoClient("mongodb://localhost:27017");
+const ds2 = new _MongoClient("mongodb://localhost:26000");`,
     },
     'service name from variable': {
       code: `
 const serviceName = "mongodb-atlas";
 const mongoClient = context.services.get(serviceName);`,
       output: `
+import { MongoClient as _MongoClient } from "mongodb";
 const serviceName = "mongodb-atlas";
-const mongoClient = new MongoClient("mongodb://localhost:27017");`,
+const mongoClient = new _MongoClient("mongodb://localhost:27017");`,
     },
     'non services object': {
       code: `const unrelated = myObj.get("mongodb-atlas");`,
