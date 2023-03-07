@@ -1,0 +1,19 @@
+name: Validate App Services config
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validate-config:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate realm_config.json
+        uses: docker://orrosenblatt/validate-json-action:latest
+        env:
+          INPUT_SCHEMA: ./config-json-schema/20210101/realm_config.schema.json
+          INPUT_JSONS: ./demo_app/realm_config.json
