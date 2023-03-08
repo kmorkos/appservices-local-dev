@@ -1,0 +1,25 @@
+name: Validate App Services config
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validate-config:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install check-jsonschema
+      - name: Validate realm_config.json
+        run: |
+          check-jsonschema --schemafile ./config-json-schema/20210101/realm_config.schema.json ./demo_app/realm_config.json
