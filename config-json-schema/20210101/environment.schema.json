@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/10gen/baas/importexport/environment-data",
+    "$ref": "#/$defs/environmentData",
+    "$defs": {
+        "environmentData": {
+            "properties": {
+                "values": {
+                    "$ref": "#/$defs/valuesMap"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "values"
+            ]
+        },
+        "valuesMap": {
+            "type": "object"
+        }
+    }
+}

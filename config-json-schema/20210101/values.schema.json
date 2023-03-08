@@ -1,0 +1,30 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/10gen/baas/importexport/value-data",
+    "$ref": "#/$defs/valueData",
+    "$defs": {
+        "valueData": {
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "maxLength": 12,
+                    "minLength": 12
+                },
+                "name": {
+                    "type": "string"
+                },
+                "value": true,
+                "from_secret": {
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "name",
+                "value",
+                "from_secret"
+            ]
+        }
+    }
+}

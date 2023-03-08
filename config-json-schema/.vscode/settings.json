@@ -1,10 +1,13 @@
 {
     "json.schemas": [
-        {
-            "fileMatch": [
-                "realm_config.json"
-            ],
-            "url": "http://localhost:5000/20210101/realm_config.schema.json"
-        }
+        { "fileMatch": [ "realm_config.json" ], "url": "http://localhost:5000/20210101/realm_config.schema.json" },
+        { "fileMatch": [ "auth/custom_user_data.json" ], "url": "http://localhost:5000/20210101/custom_user_data.schema.json" },
+        { "fileMatch": [ "auth/providers.json" ], "url": "http://localhost:5000/20210101/providers.schema.json" },
+        { "fileMatch": [ "data_sources/*/config.json" ], "url": "http://localhost:5000/20210101/data_sources.schema.json" },
+        { "fileMatch": [ "environments/*.json" ], "url": "http://localhost:5000/20210101/environment.schema.json" },
+        { "fileMatch": [ "functions/config.json" ], "url": "http://localhost:5000/20210101/functions.schema.json" },
+        { "fileMatch": [ "graphql/config.json" ], "url": "http://localhost:5000/20210101/graphql.schema.json" },
+        { "fileMatch": [ "sync/config.json" ], "url": "http://localhost:5000/20210101/sync.schema.json" },
+        { "fileMatch": [ "values/*.json" ], "url": "http://localhost:5000/20210101/values.schema.json" },
     ]
 }

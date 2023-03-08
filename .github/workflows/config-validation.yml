@@ -20,6 +20,30 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install check-jsonschema
-      - name: Validate realm_config.json
+      - name: Validate app config
         run: |
           check-jsonschema --schemafile ./config-json-schema/20210101/realm_config.schema.json ./demo_app/realm_config.json
+      - name: Validate custom user data
+        run: |
+          check-jsonschema --schemafile ./config-json-schema/20210101/custom_user_data.schema.json ./demo_app/auth/custom_user_data.json
+      - name: Validate auth providers
+        run: |
+          check-jsonschema --schemafile ./config-json-schema/20210101/providers.schema.json ./demo_app/auth/providers.json
+      - name: Validate data sources
+        run: |
+          check-jsonschema --schemafile ./config-json-schema/20210101/data_sources.schema.json ./demo_app/data_sources/*/config.json
+      - name: Validate environments
+        run: |
+          check-jsonschema --schemafile ./config-json-schema/20210101/environment.schema.json ./demo_app/environments/*.json
+      - name: Validate functions
+        run: |
+          check-jsonschema --schemafile ./config-json-schema/20210101/functions.schema.json ./demo_app/functions/config.json
+      - name: Validate graphql
+        run: |
+          check-jsonschema --schemafile ./config-json-schema/20210101/graphql.schema.json ./demo_app/graphql/config.json
+      - name: Validate sync
+        run: |
+          check-jsonschema --schemafile ./config-json-schema/20210101/sync.schema.json ./demo_app/sync/config.json
+      - name: Validate values
+        run: |
+          check-jsonschema --schemafile ./config-json-schema/20210101/values.schema.json ./demo_app/values/*.json

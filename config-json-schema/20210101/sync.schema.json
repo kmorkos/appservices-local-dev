@@ -1,0 +1,174 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/10gen/baas/importexport/sync",
+    "$ref": "#/$defs/Sync",
+    "$defs": {
+        "PBSPermissions": {
+            "properties": {
+                "read": true,
+                "write": true
+            },
+            "additionalProperties": false,
+            "type": "object"
+        },
+        "QBSAdditionalFieldsPermissions": {
+            "properties": {
+                "read": {
+                    "type": "boolean"
+                },
+                "write": {
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object"
+        },
+        "QBSFieldRule": {
+            "properties": {
+                "read": {
+                    "type": "boolean"
+                },
+                "write": {
+                    "type": "boolean"
+                },
+                "fields": {
+                    "patternProperties": {
+                        ".*": {
+                            "$ref": "#/$defs/QBSFieldRule"
+                        }
+                    },
+                    "type": "object"
+                },
+                "additional_fields": {
+                    "$ref": "#/$defs/QBSAdditionalFieldsPermissions"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object"
+        },
+        "QBSPermissions": {
+            "properties": {
+                "rules": {
+                    "patternProperties": {
+                        ".*": {
+                            "items": {
+                                "$ref": "#/$defs/QBSRole"
+                            },
+                            "type": "array"
+                        }
+                    },
+                    "type": "object"
+                },
+                "defaultRoles": {
+                    "items": {
+                        "$ref": "#/$defs/QBSRole"
+                    },
+                    "type": "array"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object"
+        },
+        "QBSRole": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "applyWhen": true,
+                "read": true,
+                "write": true,
+                "fields": {
+                    "patternProperties": {
+                        ".*": {
+                            "$ref": "#/$defs/QBSFieldRule"
+                        }
+                    },
+                    "type": "object"
+                },
+                "additional_fields": {
+                    "$ref": "#/$defs/QBSAdditionalFieldsPermissions"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "name",
+                "applyWhen"
+            ]
+        },
+        "Sync": {
+            "properties": {
+                "type": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "development_mode_enabled": {
+                    "type": "boolean"
+                },
+                "service_name": {
+                    "type": "string"
+                },
+                "database_name": {
+                    "type": "string"
+                },
+                "last_disabled": {
+                    "type": "integer"
+                },
+                "client_max_offline_days": {
+                    "type": "number"
+                },
+                "is_recovery_mode_disabled": {
+                    "type": "boolean"
+                },
+                "partition": {
+                    "$ref": "#/$defs/SyncPartitionConfig"
+                },
+                "permissions": {
+                    "$ref": "#/$defs/QBSPermissions"
+                },
+                "queryable_fields_names": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "asymmetric_tables": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "development_mode_enabled"
+            ]
+        },
+        "SyncPartitionConfig": {
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "permissions": {
+                    "$ref": "#/$defs/PBSPermissions"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "key",
+                "type",
+                "permissions"
+            ]
+        }
+    }
+}

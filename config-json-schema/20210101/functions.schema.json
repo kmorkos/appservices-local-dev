@@ -1,0 +1,43 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+        "functionConfigData": {
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "maxLength": 12,
+                    "minLength": 12
+                },
+                "name": {
+                    "type": "string"
+                },
+                "private": {
+                    "type": "boolean"
+                },
+                "run_as_system": {
+                    "type": "boolean"
+                },
+                "run_as_user_id": {
+                    "type": "string"
+                },
+                "run_as_user_id_script_source": {
+                    "type": "string"
+                },
+                "can_evaluate": true,
+                "disable_arg_logs": {
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "name",
+                "private"
+            ]
+        }
+    },
+    "items": {
+        "$ref": "#/$defs/functionConfigData"
+    },
+    "type": "array"
+}
