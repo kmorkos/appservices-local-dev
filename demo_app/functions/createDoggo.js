@@ -11,7 +11,7 @@ exports = async function (name, breed, age) {
     .collection(collName);
 
   try {
-    await collection.insertOne({ name, breed, age });
+    await collection.insertOne({ name, breed });
   } catch (err) {
     console.error("Error occurred while executing insertOne:", err.message);
     return { error: err.message };
