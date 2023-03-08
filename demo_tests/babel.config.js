@@ -7,13 +7,8 @@ module.exports = {
     [
       "../babel-context-transform/dist/index.js",
       {
-        datasources: {
-          "mongodb-atlas": "mongodb://localhost:27017",
-        },
-        values: {
-          db: "db",
-          coll: "Dog",
-        },
+        datasources: { "mongodb-atlas": "mongodb://localhost:27017" },
+        values: { db: "db", coll: "Dog" },
       },
     ],
   ],
