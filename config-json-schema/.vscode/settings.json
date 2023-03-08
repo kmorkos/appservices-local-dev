@@ -1,0 +1,10 @@
+{
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "realm_config.json"
+            ],
+            "url": "http://localhost:5000/20210101/realm_config.schema.json"
+        }
+    ]
+}
