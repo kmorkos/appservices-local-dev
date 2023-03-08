@@ -1,0 +1,19 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/10gen/baas/importexport/graph-ql-config-data",
+    "$ref": "#/$defs/graphQLConfigData",
+    "$defs": {
+        "graphQLConfigData": {
+            "properties": {
+                "use_natural_pluralization": {
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "use_natural_pluralization"
+            ]
+        }
+    }
+}

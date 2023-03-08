@@ -10,8 +10,7 @@
         "appData20210101": {
             "properties": {
                 "app_id": {
-                    "type": "string",
-                    "description": "Test app_id description"
+                    "type": "string"
                 },
                 "config_version": {
                     "type": "integer"

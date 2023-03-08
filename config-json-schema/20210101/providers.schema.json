@@ -1,0 +1,80 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+        "MetadataField": {
+            "properties": {
+                "required": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "field_name": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "required",
+                "name"
+            ]
+        },
+        "providerConfigData": {
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "maxLength": 12,
+                    "minLength": 12
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "config": {
+                    "type": "object"
+                },
+                "secret_config": {
+                    "type": "object"
+                },
+                "disabled": {
+                    "type": "boolean"
+                },
+                "metadata_fields": {
+                    "items": {
+                        "$ref": "#/$defs/MetadataField"
+                    },
+                    "type": "array"
+                },
+                "domain_restrictions": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "redirect_uris": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "name",
+                "type",
+                "disabled"
+            ]
+        }
+    },
+    "patternProperties": {
+        "^anon-user$|^api-key$|^oauth2-apple$|^mongodb-cloud$|^custom-token$|^custom-function$|^oauth2-facebook$|^oauth2-google$|^oauth2-default$|^local-userpass$": {
+            "$ref": "#/$defs/providerConfigData"
+        }
+    },
+    "additionalProperties": false,
+    "type": "object"
+}
